@@ -42,8 +42,8 @@ $$P(w_1, w_2, \dots, w_T) = \prod_{t=1}^T P(w_t \mid w_1, w_2, \dots, w_{t-1})$$
 ### 1.2 สถาปัตยกรรม Transformers (Transformer Architecture Deep-Dive)
 
 สถาปัตยกรรม Transformer เปิดตัวครั้งแรกในงานวิจัย _Attention Is All You Need_ (Vaswani
-et al., 2017) โดยยกเลิกการใช้กลไกการคำนวณแบบย้อนกลับตามลำดับเวลา (Recurrent Neural
-Networks - RNN) แล้วหันมาใช้กลไกลำดับความสนใจ (Self-Attention Mechanism)
+et al., 2017) โดยยกเลิกการใช้กลไกการคำนวณแบบย้อนกลับตามลำดับเวลา ([Recurrent Neural
+Networks - RNN](../glossary/rnn.md)) แล้วหันมาใช้กลไกลำดับความสนใจ (Self-Attention Mechanism)
 เพื่อช่วยการประมวลผลคำทั้งหมดขนานกัน
 
 ```mermaid
@@ -55,6 +55,45 @@ graph TD
     FFN --> AddNorm2[Add & LayerNorm]
     AddNorm2 --> Output[Linear & Softmax Projection]
 ```
+
+**คำอธิบายกลไกแต่ละขั้นตอน (พร้อมตัวอย่างโค้ดจำลอง):**
+
+1. **Input Tokens & Embeddings**: กระบวนการแปลงคำศัพท์ (Tokens) ให้เป็นเวกเตอร์ตัวเลข (Token Embeddings) และบวกข้อมูลตำแหน่ง (Positional Embeddings) เข้าไป เพื่อให้โมเดลทราบว่าคำใดมาก่อนหรือหลัง
+   ```python
+   # แปลง Token ID เป็นเวกเตอร์ และบวกเวกเตอร์ตำแหน่ง
+   token_embeddings = embedding_layer(input_tokens) 
+   position_embeddings = positional_encoding(sequence_length)
+   x = token_embeddings + position_embeddings
+   ```
+
+2. **Multi-Head Attention**: หัวใจหลักที่ทำให้แต่ละคำในประโยคสามารถ "มองเห็น" และให้ความสำคัญกับคำอื่นๆ ในประโยคเดียวกัน เพื่อทำความเข้าใจบริบทภาพรวม
+   ```python
+   # คำนวณ Attention เพื่อสกัดความสัมพันธ์ระหว่างคำ (หาบริบท)
+   # โดยค่า x จะถูกนำไปใช้เป็นทั้ง Query, Key และ Value
+   attention_output = multi_head_attention(query=x, key=x, value=x)
+   ```
+
+3. **Add & LayerNorm**: เป็นกระบวนการที่นำข้อมูลจากทางลัด (Residual Connection / Add) มาบวกกับผลลัพธ์ที่ได้ เพื่อป้องกันปัญหาเกรเดียนต์หาย (Vanishing Gradient) และตามด้วยการปรับบรรทัดฐาน (Normalization) ให้ค่าอยู่ในช่วงที่เหมาะสม ช่วยให้เทรนโมเดลได้นิ่งขึ้น
+   ```python
+   # บวกข้อมูลต้นฉบับ x (Residual) เข้ากับผลลัพธ์ใหม่ แล้วทำ Normalization
+   x = layer_norm_1(x + attention_output)
+   ```
+
+4. **Feed Forward Network (FFN)**: โครงข่ายประสาทเทียมที่ช่วยประมวลผลและสกัดลักษณะเฉพาะ (Features) ให้ซับซ้อนยิ่งขึ้น โดยกระทำแยกกันในแต่ละโทเคนอย่างเป็นอิสระ (ในโมเดลยุคใหม่มักใช้ร่วมกับฟังก์ชันกระตุ้นอย่าง SwiGLU)
+   ```python
+   # ประมวลผลเชิงลึกแยกตามแต่ละคำอย่างเป็นอิสระ
+   ffn_output = feed_forward_network(x)
+   # ทำกระบวนการ Add & LayerNorm ซ้ำอีกรอบ
+   x = layer_norm_2(x + ffn_output)
+   ```
+
+5. **Linear & Softmax Projection**: ขั้นตอนสุดท้ายในการทำนายคำถัดไป โดยเลเยอร์ Linear จะขยายมิติกลับไปยังขนาดของพจนานุกรม และ Softmax จะแปลงค่าให้เป็นความน่าจะเป็น (Probability) ของแต่ละคำ
+   ```python
+   # ขยายมิติกลับไปยังจำนวนคำในพจนานุกรม (Vocab Size)
+   logits = linear_projection(x)
+   # แปลงผลลัพธ์เป็นความน่าจะเป็น (0.0 - 1.0) สำหรับสุ่มคำถัดไป
+   probabilities = softmax(logits, dim=-1)
+   ```
 
 #### A. Scaled Dot-Product Attention
 
