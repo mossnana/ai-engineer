@@ -67,7 +67,10 @@ $$q(x_t \mid x_{t-1}) = \mathcal{N}(x_t; \sqrt{1 - \beta_t} x_{t-1}, \beta_t \ma
 
 $$q(x_t \mid x_0) = \mathcal{N}(x_t; \sqrt{\bar{\alpha}_t} x_0, (1 - \bar{\alpha}_t) \mathbf{I})$$
 
-โดยที่ $\alpha_t = 1 - \beta_t$ และ $\bar{\alpha}_t = \prod_{s=1}^t \alpha_s$
+โดยที่
+$\alpha_t = 1 - \beta_t$
+และ
+$\bar{\alpha}_t = \prod_{s=1}^t \alpha_s$
 
 > [!TIP]
 > **Code Example:** ลองรันโค้ดคณิตศาสตร์ของการเติม Noise ลงในรูปภาพ (Forward Process)
@@ -80,7 +83,7 @@ $$q(x_t \mid x_0) = \mathcal{N}(x_t; \sqrt{\bar{\alpha}_t} x_0, (1 - \bar{\alpha
 >     alphas = 1.0 - betas
 >     alphas_cumprod = np.cumprod(alphas)
 >     alpha_bar_t = alphas_cumprod[t]
->     
+>
 >     noise = np.random.randn(*x_0.shape)
 >     x_t = np.sqrt(alpha_bar_t) * x_0 + np.sqrt(1.0 - alpha_bar_t) * noise
 >     return x_t, noise
